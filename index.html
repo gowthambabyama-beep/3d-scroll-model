@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scroll Synced 3D Animation</title>
+  <style>
+    body {
+      margin: 0;
+      height: 500vh; /* Enough space to scroll */
+      background: #111;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script>
+  let scene = new THREE.Scene();
+  let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  let renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  let mixer, clock = new THREE.Clock();
+
+  // Add lighting
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(2, 2, 5);
+  scene.add(light);
+
+  // Load your GLB model
+  const loader = new THREE.GLTFLoader();
+  loader.load('model.glb', function(gltf) {
+      scene.add(gltf.scene);
+      mixer = new THREE.AnimationMixer(gltf.scene);
+      gltf.animations.forEach(clip => {
+        const action = mixer.clipAction(clip);
+        action.play();
+        action.paused = true; // Pause so we can control it with scroll
+      });
+      camera.position.z = 5;
+  });
+
+  // Scroll control
+  window.addEventListener('scroll', () => {
+    if (mixer) {
+      const scrollY = window.scrollY;
+      const scrollMax = document.body.scrollHeight - window.innerHeight;
+      const scrollPercent = scrollY / scrollMax; // 0 to 1
+      mixer.setTime(scrollPercent * mixer._actions[0]._clip.duration);
+    }
+  });
+
+  // Animation loop
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Handle resize
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+
+</body>
+</html>
