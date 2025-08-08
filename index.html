@@ -29,42 +29,42 @@
 
   let mixer, clock = new THREE.Clock();
 
-  // Add lighting
+  // Lighting
   const light = new THREE.DirectionalLight(0xffffff, 1);
   light.position.set(2, 2, 5);
   scene.add(light);
 
-  // Load your GLB model
+  // Load GLB model
   const loader = new THREE.GLTFLoader();
   loader.load('model.glb', function(gltf) {
-      scene.add(gltf.scene);
-      mixer = new THREE.AnimationMixer(gltf.scene);
-      gltf.animations.forEach(clip => {
-        const action = mixer.clipAction(clip);
-        action.play();
-        action.paused = true; // Pause so we can control it with scroll
-      });
-      camera.position.z = 5;
+    scene.add(gltf.scene);
+    mixer = new THREE.AnimationMixer(gltf.scene);
+    gltf.animations.forEach(clip => {
+      const action = mixer.clipAction(clip);
+      action.play();
+      action.paused = true; // Important for scroll control
+    });
+    camera.position.z = 5;
   });
 
-  // Scroll control
+  // Scroll sync
   window.addEventListener('scroll', () => {
     if (mixer) {
       const scrollY = window.scrollY;
       const scrollMax = document.body.scrollHeight - window.innerHeight;
-      const scrollPercent = scrollY / scrollMax; // 0 to 1
+      const scrollPercent = scrollY / scrollMax; // 0 → 1
       mixer.setTime(scrollPercent * mixer._actions[0]._clip.duration);
     }
   });
 
-  // Animation loop
+  // Render loop
   function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
   }
   animate();
 
-  // Handle resize
+  // Resize handling
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
