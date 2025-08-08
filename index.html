@@ -7,7 +7,7 @@
   <style>
     body {
       margin: 0;
-      height: 500vh; /* Enough space to scroll */
+      height: 500vh; /* Creates enough space to scroll */
       background: #111;
     }
     canvas {
@@ -17,56 +17,67 @@
 </head>
 <body>
 
+<!-- Load Three.js and GLTFLoader -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/loaders/GLTFLoader.js"></script>
 
 <script>
   let scene = new THREE.Scene();
-  let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  let camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
   let renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  let mixer, clock = new THREE.Clock();
+  let mixer;
 
-  // Lighting
+  // Add light
   const light = new THREE.DirectionalLight(0xffffff, 1);
   light.position.set(2, 2, 5);
   scene.add(light);
 
   // Load GLB model
   const loader = new THREE.GLTFLoader();
-  loader.load('model.glb', function(gltf) {
+  loader.load('model.glb', function (gltf) {
     scene.add(gltf.scene);
+
     mixer = new THREE.AnimationMixer(gltf.scene);
-    gltf.animations.forEach(clip => {
+    gltf.animations.forEach((clip) => {
       const action = mixer.clipAction(clip);
       action.play();
-      action.paused = true; // Important for scroll control
+      action.paused = true; // Pause so scroll can control it
     });
+
     camera.position.z = 5;
   });
 
-  // Scroll sync
+  // Scroll-based animation control
   window.addEventListener('scroll', () => {
     if (mixer) {
       const scrollY = window.scrollY;
-      const scrollMax = document.body.scrollHeight - window.innerHeight;
-      const scrollPercent = scrollY / scrollMax; // 0 → 1
-      mixer.setTime(scrollPercent * mixer._actions[0]._clip.duration);
+      const scrollMax =
+        document.body.scrollHeight - window.innerHeight;
+      const scrollPercent = scrollY / scrollMax; // value between 0 and 1
+      mixer.setTime(
+        scrollPercent * mixer._actions[0]._clip.duration
+      );
     }
   });
 
-  // Render loop
+  // Animation loop
   function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
   }
   animate();
 
-  // Resize handling
+  // Handle window resize
   window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
